@@ -1,242 +1,290 @@
-import React, { useState, useEffect } from 'react';
-import { Play, RotateCcw, CheckCircle, XCircle } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Bilangan Prima</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Transisi custom untuk animasi mulus */
+        .math-container {
+            transition: all 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col items-center justify-center p-4 antialiased">
 
-// Bank soal berisi 30 pertanyaan (akar, pangkat, faktorial)
-// Semua nilai (value) dari operasi tersebut adalah bilangan 2 digit (10-99).
-const RAW_QUESTIONS = [
-  { id: 1, type: 'akar', num: 121, value: 11, isPrime: true },
-  { id: 2, type: 'akar', num: 169, value: 13, isPrime: true },
-  { id: 3, type: 'akar', num: 289, value: 17, isPrime: true },
-  { id: 4, type: 'akar', num: 361, value: 19, isPrime: true },
-  { id: 5, type: 'akar', num: 529, value: 23, isPrime: true },
-  { id: 6, type: 'akar', num: 841, value: 29, isPrime: true },
-  { id: 7, type: 'akar', num: 961, value: 31, isPrime: true },
-  { id: 8, type: 'akar', num: 1369, value: 37, isPrime: true },
-  { id: 9, type: 'akar', num: 1681, value: 41, isPrime: true },
-  { id: 10, type: 'akar', num: 1849, value: 43, isPrime: true },
-  { id: 11, type: 'akar', num: 2209, value: 47, isPrime: true },
-  { id: 12, type: 'akar', num: 2809, value: 53, isPrime: true },
-  { id: 13, type: 'akar', num: 3481, value: 59, isPrime: true },
-  { id: 14, type: 'akar', num: 3721, value: 61, isPrime: true },
-  { id: 15, type: 'akar', num: 4489, value: 67, isPrime: true },
-  { id: 16, type: 'pangkat', base: 2, exp: 4, value: 16, isPrime: false },
-  { id: 17, type: 'pangkat', base: 3, exp: 3, value: 27, isPrime: false },
-  { id: 18, type: 'pangkat', base: 4, exp: 2, value: 16, isPrime: false },
-  { id: 19, type: 'pangkat', base: 5, exp: 2, value: 25, isPrime: false },
-  { id: 20, type: 'pangkat', base: 6, exp: 2, value: 36, isPrime: false },
-  { id: 21, type: 'pangkat', base: 7, exp: 2, value: 49, isPrime: false },
-  { id: 22, type: 'pangkat', base: 8, exp: 2, value: 64, isPrime: false },
-  { id: 23, type: 'pangkat', base: 9, exp: 2, value: 81, isPrime: false },
-  { id: 24, type: 'pangkat', base: 2, exp: 5, value: 32, isPrime: false },
-  { id: 25, type: 'pangkat', base: 2, exp: 6, value: 64, isPrime: false },
-  { id: 26, type: 'pangkat', base: 3, exp: 4, value: 81, isPrime: false },
-  { id: 27, type: 'faktorial', num: 4, value: 24, isPrime: false },
-  { id: 28, type: 'akar', num: 144, value: 12, isPrime: false },
-  { id: 29, type: 'akar', num: 225, value: 15, isPrime: false },
-  { id: 30, type: 'akar', num: 400, value: 20, isPrime: false },
-];
-
-// Fungsi untuk mengacak urutan soal
-const shuffleArray = (array) => {
-  const newArr = [...array];
-  for (let i = newArr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
-  }
-  return newArr;
-};
-
-export default function App() {
-  const [gameState, setGameState] = useState('start'); // start, playing, end
-  const [questions, setQuestions] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [score, setScore] = useState(0);
-  const [answerStatus, setAnswerStatus] = useState(null); // 'correct' atau 'incorrect'
-  const [showExplanation, setShowExplanation] = useState(false);
-
-  const startGame = () => {
-    setQuestions(shuffleArray(RAW_QUESTIONS));
-    setCurrentIndex(0);
-    setScore(0);
-    setAnswerStatus(null);
-    setShowExplanation(false);
-    setGameState('playing');
-  };
-
-  const handleAnswer = (userSaysPrime) => {
-    if (answerStatus !== null) return; // Mencegah klik ganda
-
-    const currentQ = questions[currentIndex];
-    const isCorrect = userSaysPrime === currentQ.isPrime;
-
-    setAnswerStatus(isCorrect ? 'correct' : 'incorrect');
-    if (isCorrect) setScore((s) => s + 1);
-    setShowExplanation(true);
-
-    // Jeda waktu 1.5 detik untuk memperlihatkan animasi warna dan penjelasan
-    setTimeout(() => {
-      if (currentIndex + 1 >= questions.length) {
-        setGameState('end');
-      } else {
-        setCurrentIndex((i) => i + 1);
-        setAnswerStatus(null);
-        setShowExplanation(false);
-      }
-    }, 1500);
-  };
-
-  // Render Layar Awal
-  if (gameState === 'start') {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white dark:bg-slate-800 rounded-3xl shadow-xl p-8 text-center space-y-6">
-          <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-4xl font-bold">?</span>
-          </div>
-          <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Game Bilangan Prima</h1>
-          <p className="text-slate-600 dark:text-slate-300">
+    <!-- START SCREEN -->
+    <div id="start-screen" class="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 text-center space-y-6">
+        <div class="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span class="text-4xl font-bold">?</span>
+        </div>
+        <h1 class="text-3xl font-bold text-slate-800">Game Bilangan Prima</h1>
+        <p class="text-slate-600">
             Tebak apakah hasil dari operasi matematika yang muncul adalah bilangan prima atau bukan. Akan ada 30 soal!
-          </p>
-          <button
-            onClick={startGame}
-            className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold text-lg transition-transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-blue-500/30"
-          >
-            <Play size={24} />
+        </p>
+        <button onclick="startGame()" class="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold text-lg transition-transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-blue-500/30">
+            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
             Mulai Bermain
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Render Layar Akhir (Skor)
-  if (gameState === 'end') {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white dark:bg-slate-800 rounded-3xl shadow-xl p-8 text-center space-y-6">
-          <div className="w-24 h-24 bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto mb-4">
-            <CheckCircle size={48} />
-          </div>
-          <h2 className="text-3xl font-bold text-slate-800 dark:text-white">Permainan Selesai!</h2>
-          <div className="bg-slate-100 dark:bg-slate-700 rounded-2xl p-6">
-            <p className="text-sm text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold mb-1">Total Skor Anda</p>
-            <p className="text-5xl font-bold text-blue-600 dark:text-blue-400">
-              {score} <span className="text-2xl text-slate-400 dark:text-slate-500">/ 30</span>
-            </p>
-          </div>
-          <button
-            onClick={startGame}
-            className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold text-lg transition-transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-blue-500/30"
-          >
-            <RotateCcw size={24} />
-            Main Lagi
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Menentukan warna tulisan angka berdasarkan kebenaran jawaban
-  let numberColorClass = 'text-slate-800 dark:text-white';
-  if (answerStatus === 'correct') {
-    numberColorClass = 'text-green-500 dark:text-green-400 scale-110';
-  } else if (answerStatus === 'incorrect') {
-    numberColorClass = 'text-red-500 dark:text-red-400 scale-90';
-  }
-
-  const currentQ = questions[currentIndex];
-
-  // Helper untuk merender bentuk matematika
-  const renderExpression = (q, colorClass) => {
-    if (!q) return null;
-    
-    if (q.type === 'akar') {
-      return (
-        <div className={`flex items-stretch justify-center text-7xl md:text-8xl font-bold transition-all duration-300 ${colorClass}`}>
-          <div className="font-serif -mr-1 md:-mr-2">&radic;</div>
-          <div className="border-t-[5px] md:border-t-[7px] border-current mt-[0.12em] pt-[0.05em]">{q.num}</div>
-        </div>
-      );
-    }
-    if (q.type === 'pangkat') {
-      return (
-        <div className={`flex items-baseline justify-center text-7xl md:text-8xl font-bold transition-all duration-300 ${colorClass}`}>
-          <span>{q.base}</span>
-          <sup className="text-4xl md:text-5xl -ml-1 font-semibold">{q.exp}</sup>
-        </div>
-      );
-    }
-    if (q.type === 'faktorial') {
-      return (
-        <div className={`flex justify-center text-7xl md:text-8xl font-bold transition-all duration-300 ${colorClass}`}>
-          {q.num}!
-        </div>
-      );
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col items-center justify-center p-4">
-      {/* Indikator Progress */}
-      <div className="absolute top-8 w-full max-w-md px-4">
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-slate-500 dark:text-slate-400 font-medium text-sm">Soal {currentIndex + 1} / 30</span>
-          <span className="text-slate-500 dark:text-slate-400 font-medium text-sm">Skor: {score}</span>
-        </div>
-        <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
-          <div 
-            className="bg-blue-500 h-2 rounded-full transition-all duration-300" 
-            style={{ width: `${((currentIndex) / 30) * 100}%` }}
-          ></div>
-        </div>
-      </div>
-
-      <div className="max-w-md w-full space-y-8 mt-12">
-        {/* Area Pertanyaan */}
-        <div className="text-center space-y-2">
-          <h2 className="text-xl md:text-2xl font-bold text-slate-700 dark:text-slate-200">
-            Apakah hasil ini merupakan bilangan prima?
-          </h2>
-        </div>
-
-        {/* Kotak Angka Matematika */}
-        <div className="bg-white dark:bg-slate-800 h-64 md:h-72 rounded-3xl shadow-xl flex flex-col items-center justify-center relative overflow-hidden">
-          {renderExpression(currentQ, numberColorClass)}
-          
-          {/* Penjelasan Muncul Setelah Menjawab */}
-          <div className={`absolute bottom-6 transition-all duration-300 ${showExplanation ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-            <p className={`text-xl md:text-2xl font-bold ${currentQ.isPrime ? 'text-green-600 dark:text-green-400' : 'text-slate-600 dark:text-slate-300'}`}>
-              = {currentQ.value} 
-              <span className="text-base md:text-lg font-medium ml-2">
-                ({currentQ.isPrime ? 'Prima' : 'Bukan Prima'})
-              </span>
-            </p>
-          </div>
-          
-          {/* Ikon Benar/Salah */}
-          <div className={`absolute top-6 right-6 transition-all duration-300 ${answerStatus ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}>
-             {answerStatus === 'correct' ? <CheckCircle size={32} className="text-green-500" /> : <XCircle size={32} className="text-red-500" />}
-          </div>
-        </div>
-
-        {/* Tombol Yes / No */}
-        <div className="flex gap-4">
-          <button
-            onClick={() => handleAnswer(true)}
-            disabled={answerStatus !== null}
-            className="flex-1 bg-green-500 hover:bg-green-600 text-white py-5 rounded-2xl font-bold text-2xl transition-transform active:scale-95 disabled:opacity-50 disabled:active:scale-100 shadow-lg shadow-green-500/30"
-          >
-            YES
-          </button>
-          <button
-            onClick={() => handleAnswer(false)}
-            disabled={answerStatus !== null}
-            className="flex-1 bg-red-500 hover:bg-red-600 text-white py-5 rounded-2xl font-bold text-2xl transition-transform active:scale-95 disabled:opacity-50 disabled:active:scale-100 shadow-lg shadow-red-500/30"
-          >
-            NO
-          </button>
-        </div>
-      </div>
+        </button>
     </div>
-  );
-}
+
+    <!-- PLAYING SCREEN -->
+    <div id="playing-screen" class="hidden w-full max-w-md flex flex-col items-center">
+        <!-- Indikator Progress -->
+        <div class="absolute top-8 w-full max-w-md px-4">
+            <div class="flex justify-between items-center mb-2">
+                <span id="progress-text" class="text-slate-500 font-medium text-sm">Soal 1 / 30</span>
+                <span id="score-text" class="text-slate-500 font-medium text-sm">Skor: 0</span>
+            </div>
+            <div class="w-full bg-slate-200 rounded-full h-2">
+                <div id="progress-bar" class="bg-blue-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <div class="w-full space-y-8 mt-12">
+            <!-- Area Pertanyaan -->
+            <div class="text-center space-y-2">
+                <h2 class="text-xl md:text-2xl font-bold text-slate-700">
+                    Apakah hasil ini merupakan bilangan prima?
+                </h2>
+            </div>
+
+            <!-- Kotak Angka Matematika -->
+            <div class="bg-white h-64 md:h-72 rounded-3xl shadow-xl flex flex-col items-center justify-center relative overflow-hidden">
+                <div id="math-expression" class="math-container text-slate-800">
+                    <!-- Expression di-render di sini -->
+                </div>
+                
+                <!-- Penjelasan Muncul Setelah Menjawab -->
+                <div id="explanation-box" class="absolute bottom-6 opacity-0 translate-y-4 transition-all duration-300">
+                    <p id="explanation-text" class="text-xl md:text-2xl font-bold text-slate-600">
+                        = <span id="exp-val"></span> 
+                        <span id="exp-prime" class="text-base md:text-lg font-medium ml-2"></span>
+                    </p>
+                </div>
+                
+                <!-- Ikon Benar/Salah -->
+                <div id="status-icon" class="absolute top-6 right-6 opacity-0 scale-50 transition-all duration-300">
+                    <!-- Ikon disisipkan via JS -->
+                </div>
+            </div>
+
+            <!-- Tombol Yes / No -->
+            <div class="flex gap-4">
+                <button id="btn-yes" onclick="handleAnswer(true)" class="flex-1 bg-green-500 hover:bg-green-600 text-white py-5 rounded-2xl font-bold text-2xl transition-transform active:scale-95 disabled:opacity-50 disabled:active:scale-100 shadow-lg shadow-green-500/30">
+                    YES
+                </button>
+                <button id="btn-no" onclick="handleAnswer(false)" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-5 rounded-2xl font-bold text-2xl transition-transform active:scale-95 disabled:opacity-50 disabled:active:scale-100 shadow-lg shadow-red-500/30">
+                    NO
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- END SCREEN -->
+    <div id="end-screen" class="hidden max-w-md w-full bg-white rounded-3xl shadow-xl p-8 text-center space-y-6">
+        <div class="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-12 h-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        </div>
+        <h2 class="text-3xl font-bold text-slate-800">Permainan Selesai!</h2>
+        <div class="bg-slate-100 rounded-2xl p-6">
+            <p class="text-sm text-slate-500 uppercase tracking-wider font-semibold mb-1">Total Skor Anda</p>
+            <p class="text-5xl font-bold text-blue-600">
+                <span id="final-score">0</span> <span class="text-2xl text-slate-400">/ 30</span>
+            </p>
+        </div>
+        <button onclick="startGame()" class="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold text-lg transition-transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-blue-500/30">
+            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><polyline points="3 3 3 8 8 8"></polyline></svg>
+            Main Lagi
+        </button>
+    </div>
+
+    <!-- MAIN JAVASCRIPT -->
+    <script>
+        // Bank Soal
+        const RAW_QUESTIONS = [
+            { id: 1, type: 'akar', num: 121, value: 11, isPrime: true },
+            { id: 2, type: 'akar', num: 169, value: 13, isPrime: true },
+            { id: 3, type: 'akar', num: 289, value: 17, isPrime: true },
+            { id: 4, type: 'akar', num: 361, value: 19, isPrime: true },
+            { id: 5, type: 'akar', num: 529, value: 23, isPrime: true },
+            { id: 6, type: 'akar', num: 841, value: 29, isPrime: true },
+            { id: 7, type: 'akar', num: 961, value: 31, isPrime: true },
+            { id: 8, type: 'akar', num: 1369, value: 37, isPrime: true },
+            { id: 9, type: 'akar', num: 1681, value: 41, isPrime: true },
+            { id: 10, type: 'akar', num: 1849, value: 43, isPrime: true },
+            { id: 11, type: 'akar', num: 2209, value: 47, isPrime: true },
+            { id: 12, type: 'akar', num: 2809, value: 53, isPrime: true },
+            { id: 13, type: 'akar', num: 3481, value: 59, isPrime: true },
+            { id: 14, type: 'akar', num: 3721, value: 61, isPrime: true },
+            { id: 15, type: 'akar', num: 4489, value: 67, isPrime: true },
+            { id: 16, type: 'pangkat', base: 2, exp: 4, value: 16, isPrime: false },
+            { id: 17, type: 'pangkat', base: 3, exp: 3, value: 27, isPrime: false },
+            { id: 18, type: 'pangkat', base: 4, exp: 2, value: 16, isPrime: false },
+            { id: 19, type: 'pangkat', base: 5, exp: 2, value: 25, isPrime: false },
+            { id: 20, type: 'pangkat', base: 6, exp: 2, value: 36, isPrime: false },
+            { id: 21, type: 'pangkat', base: 7, exp: 2, value: 49, isPrime: false },
+            { id: 22, type: 'pangkat', base: 8, exp: 2, value: 64, isPrime: false },
+            { id: 23, type: 'pangkat', base: 9, exp: 2, value: 81, isPrime: false },
+            { id: 24, type: 'pangkat', base: 2, exp: 5, value: 32, isPrime: false },
+            { id: 25, type: 'pangkat', base: 2, exp: 6, value: 64, isPrime: false },
+            { id: 26, type: 'pangkat', base: 3, exp: 4, value: 81, isPrime: false },
+            { id: 27, type: 'faktorial', num: 4, value: 24, isPrime: false },
+            { id: 28, type: 'akar', num: 144, value: 12, isPrime: false },
+            { id: 29, type: 'akar', num: 225, value: 15, isPrime: false },
+            { id: 30, type: 'akar', num: 400, value: 20, isPrime: false },
+        ];
+
+        // SVGs untuk ikon
+        const checkIcon = `<svg class="w-8 h-8 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+        const xIcon = `<svg class="w-8 h-8 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+
+        // State Global
+        let questions = [];
+        let currentIndex = 0;
+        let score = 0;
+        let isAnswering = false; // Mencegah klik ganda
+
+        // Fungsi Acak Soal
+        function shuffleArray(array) {
+            let newArr = [...array];
+            for (let i = newArr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+            }
+            return newArr;
+        }
+
+        // Tampilkan layar tertentu
+        function showScreen(screenId) {
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('playing-screen').classList.add('hidden');
+            document.getElementById('end-screen').classList.add('hidden');
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        // Mulai Game
+        function startGame() {
+            questions = shuffleArray(RAW_QUESTIONS);
+            currentIndex = 0;
+            score = 0;
+            isAnswering = false;
+            
+            showScreen('playing-screen');
+            renderQuestion();
+        }
+
+        // Render Soal ke Layar
+        function renderQuestion() {
+            const q = questions[currentIndex];
+            
+            // Update Progress dan Score
+            document.getElementById('progress-text').innerText = `Soal ${currentIndex + 1} / 30`;
+            document.getElementById('score-text').innerText = `Skor: ${score}`;
+            document.getElementById('progress-bar').style.width = `${((currentIndex) / 30) * 100}%`;
+
+            // Reset UI States
+            const mathEl = document.getElementById('math-expression');
+            mathEl.className = 'math-container text-slate-800'; // Reset warna
+            
+            document.getElementById('explanation-box').classList.replace('opacity-100', 'opacity-0');
+            document.getElementById('explanation-box').classList.replace('translate-y-0', 'translate-y-4');
+            
+            document.getElementById('status-icon').classList.replace('opacity-100', 'opacity-0');
+            document.getElementById('status-icon').classList.replace('scale-100', 'scale-50');
+
+            document.getElementById('btn-yes').disabled = false;
+            document.getElementById('btn-no').disabled = false;
+
+            // Render bentuk matematika
+            let htmlContent = '';
+            if (q.type === 'akar') {
+                htmlContent = `
+                    <div class="flex items-stretch justify-center text-7xl md:text-8xl font-bold">
+                        <div class="font-serif -mr-1 md:-mr-2">&radic;</div>
+                        <div class="border-t-[5px] md:border-t-[7px] border-current mt-[0.12em] pt-[0.05em]">${q.num}</div>
+                    </div>`;
+            } else if (q.type === 'pangkat') {
+                htmlContent = `
+                    <div class="flex items-baseline justify-center text-7xl md:text-8xl font-bold">
+                        <span>${q.base}</span>
+                        <sup class="text-4xl md:text-5xl -ml-1 font-semibold">${q.exp}</sup>
+                    </div>`;
+            } else if (q.type === 'faktorial') {
+                htmlContent = `
+                    <div class="flex justify-center text-7xl md:text-8xl font-bold">
+                        ${q.num}!
+                    </div>`;
+            }
+            mathEl.innerHTML = htmlContent;
+        }
+
+        // Handler saat menjawab
+        function handleAnswer(userSaysPrime) {
+            if (isAnswering) return;
+            isAnswering = true;
+
+            // Disable buttons
+            document.getElementById('btn-yes').disabled = true;
+            document.getElementById('btn-no').disabled = true;
+
+            const q = questions[currentIndex];
+            const isCorrect = userSaysPrime === q.isPrime;
+
+            // Update Skor
+            if (isCorrect) score++;
+
+            // Update Warna & Animasi Matematika
+            const mathEl = document.getElementById('math-expression');
+            if (isCorrect) {
+                mathEl.className = 'math-container text-green-500 scale-110';
+            } else {
+                mathEl.className = 'math-container text-red-500 scale-90';
+            }
+
+            // Tampilkan Ikon Benar/Salah
+            const statusIcon = document.getElementById('status-icon');
+            statusIcon.innerHTML = isCorrect ? checkIcon : xIcon;
+            statusIcon.classList.replace('opacity-0', 'opacity-100');
+            statusIcon.classList.replace('scale-50', 'scale-100');
+
+            // Tampilkan Penjelasan
+            document.getElementById('exp-val').innerText = q.value;
+            const expPrimeEl = document.getElementById('exp-prime');
+            if (q.isPrime) {
+                expPrimeEl.innerText = '(Prima)';
+                document.getElementById('explanation-text').className = 'text-xl md:text-2xl font-bold text-green-600';
+            } else {
+                expPrimeEl.innerText = '(Bukan Prima)';
+                document.getElementById('explanation-text').className = 'text-xl md:text-2xl font-bold text-slate-600';
+            }
+
+            const expBox = document.getElementById('explanation-box');
+            expBox.classList.replace('opacity-0', 'opacity-100');
+            expBox.classList.replace('translate-y-4', 'translate-y-0');
+
+            // Jeda sebelum lanjut
+            setTimeout(() => {
+                if (currentIndex + 1 >= questions.length) {
+                    endGame();
+                } else {
+                    currentIndex++;
+                    isAnswering = false;
+                    renderQuestion();
+                }
+            }, 1500);
+        }
+
+        // Akhiri Game
+        function endGame() {
+            document.getElementById('final-score').innerText = score;
+            showScreen('end-screen');
+        }
+
+        // Inisialisasi awal (Tampilkan Start Screen)
+        showScreen('start-screen');
+    </script>
+</body>
+</html>
