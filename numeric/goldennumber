@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Golden Ratio & Fibonacci Spiral Math Game</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        .gold-gradient-text {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .gold-bg-gradient {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        canvas {
+            touch-action: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between overflow-x-hidden">
+
+    <!-- Header -->
+    <header class="glass-card sticky top-0 z-30 px-4 py-3 border-b border-slate-800">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl gold-bg-gradient flex items-center justify-center text-slate-900 font-extrabold text-xl shadow-lg shadow-amber-500/20">
+                    <i class="fa-solid font-bold">Φ</i>
+                </div>
+                <div>
+                    <h1 class="text-lg md:text-xl font-bold gold-gradient-text leading-tight">Golden Spiral & Fibonacci Challenge</h1>
+                    <p class="text-xs text-slate-400">Petualangan Matematika Rasio Keemasan</p>
+                </div>
+            </div>
+
+            <!-- Mode Selector Tabs -->
+            <div class="flex items-center bg-slate-900/80 p-1 rounded-xl border border-slate-800 text-xs md:text-sm font-medium">
+                <button id="tab-visualizer" onclick="switchMode('visualizer')" class="px-3 md:px-4 py-1.5 rounded-lg bg-amber-500 text-slate-950 font-bold transition-all shadow-sm">
+                    <i class="fa-solid fa-play mr-1.5"></i>Visualisasi Spiral
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="max-w-7xl w-full mx-auto p-4 md:p-6 flex-grow grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left / Center Column: Canvas Viewport -->
+        <div class="lg:col-span-8 flex flex-col space-y-4">
+            <!-- Canvas Container Card -->
+            <div class="glass-card rounded-2xl p-4 flex flex-col relative overflow-hidden shadow-2xl border border-slate-800">
+                
+                <!-- Instruction Header matching the image -->
+                <div class="text-center py-2 mb-2 bg-slate-900/90 rounded-xl border border-slate-800/80">
+                    <h2 class="text-base md:text-xl font-extrabold text-amber-300 tracking-wide">
+                        Tentukan jumlah dari semua bilangan berikut.
+                    </h2>
+                </div>
+
+                <!-- Top Canvas Overlay Controls -->
+                <div class="flex items-center justify-between mb-2 z-10">
+                    <div class="flex items-center space-x-2">
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                            <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse mr-1.5"></span>
+                            <span id="status-badge">Menggambar Spiral...</span>
+                        </span>
+                    </div>
+
+                    <div class="flex items-center space-x-2 bg-slate-900/80 p-1 rounded-lg border border-slate-800 text-xs">
+                        <button onclick="zoomCanvas(1.2)" class="w-8 h-8 rounded-md hover:bg-slate-800 flex items-center justify-center text-slate-300 transition" title="Zoom In">
+                            <i class="fa-solid fa-magnifying-glass-plus"></i>
+                        </button>
+                        <button onclick="zoomCanvas(0.8)" class="w-8 h-8 rounded-md hover:bg-slate-800 flex items-center justify-center text-slate-300 transition" title="Zoom Out">
+                            <i class="fa-solid fa-magnifying-glass-minus"></i>
+                        </button>
+                        <button onclick="resetCamera()" class="w-8 h-8 rounded-md hover:bg-slate-800 flex items-center justify-center text-slate-300 transition" title="Reset Pandangan">
+                            <i class="fa-solid fa-rotate-left"></i>
+                        </button>
+                        <button id="btn-toggle-sound" onclick="toggleAudio()" class="w-8 h-8 rounded-md hover:bg-slate-800 flex items-center justify-center text-amber-400 transition" title="Suara On/Off">
+                            <i class="fa-solid fa-volume-high"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Interactive HTML5 Canvas -->
+                <div class="relative w-full h-[440px] md:h-[520px] rounded-xl bg-slate-950 overflow-hidden border border-slate-800 cursor-grab active:cursor-grabbing" id="canvas-wrapper">
+                    <canvas id="spiralCanvas" class="w-full h-full block"></canvas>
+                    
+                    <!-- Canvas Drag Hint Overlay -->
+                    <div class="absolute bottom-3 right-3 pointer-events-none text-[10px] text-slate-400 bg-slate-900/90 px-2 py-1 rounded border border-slate-800">
+                        <i class="fa-solid fa-hand-pointer mr-1"></i>Geser / Zoom untuk navigasi
+                    </div>
+                </div>
+
+                <!-- Bottom Playback Controls (For Visualizer Mode) -->
+                <div id="visualizer-controls" class="mt-4 pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center space-x-2">
+                        <button id="btn-play" onclick="togglePlay()" class="gold-bg-gradient hover:brightness-110 text-slate-950 px-5 py-2.5 rounded-xl font-bold flex items-center space-x-2 shadow-lg shadow-amber-500/20 transition-all active:scale-95">
+                            <i id="icon-play" class="fa-solid fa-pause"></i>
+                            <span id="text-play">Jeda</span>
+                        </button>
+
+                        <button onclick="restartAnimation()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2.5 rounded-xl font-semibold flex items-center space-x-2 transition border border-slate-700">
+                            <i class="fa-solid fa-rotate-right"></i>
+                            <span class="hidden sm:inline">Ulangi</span>
+                        </button>
+
+                        <button onclick="stepPrevious()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 w-10 h-10 rounded-xl flex items-center justify-center transition border border-slate-700" title="Langkah Sebelumnya">
+                            <i class="fa-solid fa-backward-step"></i>
+                        </button>
+
+                        <button onclick="stepNext()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 w-10 h-10 rounded-xl flex items-center justify-center transition border border-slate-700" title="Langkah Selanjutnya">
+                            <i class="fa-solid fa-forward-step"></i>
+                        </button>
+                    </div>
+
+                    <!-- Speed Option -->
+                    <div class="flex items-center space-x-2 text-xs">
+                        <span class="text-slate-400 font-medium">Kecepatan:</span>
+                        <select id="select-speed" onchange="changeSpeed(this.value)" class="bg-slate-900 border border-slate-700 text-amber-400 font-bold rounded-lg px-2.5 py-1.5 focus:outline-none">
+                            <option value="1200">0.5x (Lambat)</option>
+                            <option value="600" selected>1.0x (Normal)</option>
+                            <option value="300">2.0x (Cepat)</option>
+                            <option value="120">5.0x (Sangat Cepat)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Kolom Jawaban Kuis (Tepat di bawah tombol Jeda / Kontrol) -->
+                <div class="mt-4 pt-3 border-t border-slate-800 space-y-3">
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                        <label for="quiz-input" class="text-xs md:text-sm font-bold text-slate-200 flex items-center space-x-2">
+                            <i class="fa-solid fa-calculator text-amber-400"></i>
+                            <span>Jawaban Anda (Total Jumlah Bilangan):</span>
+                        </label>
+                        <div class="flex items-center space-x-2 flex-1 max-w-md">
+                            <input type="number" id="quiz-input" placeholder="Masukkan total penjumlahan..." class="w-full bg-slate-900 border border-slate-700 focus:border-amber-400 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-500 outline-none transition" onkeydown="if(event.key==='Enter') checkInputAnswer()">
+                            <button id="btn-submit-quiz" onclick="checkInputAnswer()" class="gold-bg-gradient hover:brightness-110 text-slate-950 font-bold px-5 py-2.5 rounded-xl text-xs transition active:scale-95 shadow-md flex items-center justify-center whitespace-nowrap">
+                                <i class="fa-solid fa-paper-plane mr-1.5"></i> Jawab
+                            </button>
+                        </div>
+                    </div>
+                    <div id="quiz-feedback" class="hidden p-3 rounded-xl text-xs font-semibold text-center border"></div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Right Column: Stats, Formula Tricks, & Sequence List -->
+        <div class="lg:col-span-4 flex flex-col space-y-5">
+
+            <!-- Realtime Counters Card -->
+            <div class="glass-card rounded-2xl p-5 border border-slate-800 shadow-xl space-y-4">
+                <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                    <span>Informasi Bilangan</span>
+                    <i class="fa-solid fa-chart-line text-amber-400"></i>
+                </h2>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-slate-900/90 rounded-xl p-3.5 border border-slate-800">
+                        <span class="text-[11px] text-slate-400 block mb-1">Bilangan Saat Ini (F<sub>n</sub>)</span>
+                        <span id="stat-current" class="text-xl md:text-2xl font-extrabold text-amber-400 block truncate">1</span>
+                        <span id="stat-index" class="text-[10px] text-slate-500 mt-0.5 block">Suku ke-1 (N=1)</span>
+                    </div>
+
+                    <div class="bg-slate-900/90 rounded-xl p-3.5 border border-slate-800">
+                        <span class="text-[11px] text-slate-400 block mb-1">Kemajuan Spiral</span>
+                        <span id="stat-progress-count" class="text-xl md:text-2xl font-extrabold text-emerald-400 block truncate">1 / 32</span>
+                        <span id="stat-progress" class="text-[10px] text-slate-500 mt-0.5 block">Bilangan Terbuka</span>
+                    </div>
+                </div>
+
+                <!-- Formula Shortcut Tip -->
+                <div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3.5 text-xs space-y-1.5">
+                    <div class="flex items-center space-x-2 text-amber-400 font-bold">
+                        <i class="fa-solid fa-lightbulb"></i>
+                        <span>Rumus Cepat Penjumlahan Fibonacci:</span>
+                    </div>
+                    <p class="text-slate-300 leading-relaxed">
+                        Jumlah <span class="font-bold text-amber-300">N</span> suku pertama selalu sama dengan suku ke-<span class="font-bold text-amber-300">(N + 2) dikurangi 1</span>!
+                    </p>
+                    <div class="bg-slate-950 p-2 rounded border border-slate-800/80 font-mono text-[11px] text-amber-300 text-center">
+                        ∑ F<sub>i</sub> = F<sub>(N + 2)</sub> - 1
+                    </div>
+                </div>
+            </div>
+
+            <!-- List of Fibonacci Numbers -->
+            <div class="glass-card rounded-2xl p-4 border border-slate-800 space-y-2 flex-grow">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Urutan 32 Bilangan Spiral</h3>
+                <div id="numbers-scroll-list" class="max-h-[380px] overflow-y-auto space-y-1.5 pr-1 text-xs">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        // Exact 32 Fibonacci Numbers from the picture
+        const fibonacciSequence = [
+            1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 
+            1597, 2584, 4181, 6765, 10946, 17711, 28657, 46368, 75025, 121393, 
+            196418, 317811, 514229, 832040, 1346269, 2178309
+        ];
+
+        // Canvas & Context Setup
+        const canvas = document.getElementById('spiralCanvas');
+        const ctx = canvas.getContext('2d');
+        const wrapper = document.getElementById('canvas-wrapper');
+
+        let currentIndex = 0;
+        let isPlaying = true;
+        let stepInterval = null;
+        let delayTimeout = null;
+        let isWaitingDelay = false;
+        let speedMs = 600;
+
+        // Total penjumlahan seluruh 32 bilangan Fibonacci (5.702.886)
+        const totalSum = fibonacciSequence.reduce((acc, curr) => acc + curr, 0);
+
+        // Camera transform state (Pan & Zoom)
+        let camera = {
+            x: 0,
+            y: 0,
+            zoom: 1,
+            targetX: 0,
+            targetY: 0,
+            targetZoom: 1,
+            isDragging: false,
+            startX: 0,
+            startY: 0
+        };
+
+        // Audio synthesizer using Web Audio API
+        let audioCtx = null;
+        let soundEnabled = true;
+
+        // Particles array
+        let particles = [];
+
+        function initAudio() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) {
+                    audioCtx = new AudioContext();
+                }
+            }
+        }
+
+        function playChime(index) {
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+                if (!audioCtx) return;
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                // Dibatasi agar nada audio nyaman dan tidak terlalu melengking tinggi di akhir
+                const baseFreq = 220; // A3
+                const scaleRatios = [1, 9/8, 5/4, 3/2, 5/3, 2];
+                const cycleIndex = index % 6;
+                const octave = Math.floor((index % 18) / 6); // Maksimal 3 oktaf
+                const ratio = scaleRatios[cycleIndex];
+                const freq = baseFreq * ratio * Math.pow(1.25, octave);
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+                gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.35);
+            } catch (e) {
+                // Ignore audio restriction errors
+            }
+        }
+
+        function toggleAudio() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('btn-toggle-sound');
+            if (soundEnabled) {
+                btn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+                btn.className = 'w-8 h-8 rounded-md hover:bg-slate-800 flex items-center justify-center text-amber-400 transition';
+                initAudio();
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+                btn.className = 'w-8 h-8 rounded-md hover:bg-slate-800 flex items-center justify-center text-slate-500 transition';
+            }
+        }
+
+        // Key anchor points (Normalized 0.0 to 1.0) matching image reference exactly
+        const keyPositions = [
+            { nx: 0.63, ny: 0.77 }, // 1
+            { nx: 0.67, ny: 0.77 }, // 1
+            { nx: 0.68, ny: 0.71 }, // 2
+            { nx: 0.65, ny: 0.67 }, // 3
+            { nx: 0.61, ny: 0.67 }, // 5
+            { nx: 0.57, ny: 0.70 }, // 8
+            { nx: 0.55, ny: 0.74 }, // 13
+            { nx: 0.55, ny: 0.78 }, // 21
+            { nx: 0.55, ny: 0.83 }, // 34
+            { nx: 0.58, ny: 0.88 }, // 55
+            { nx: 0.62, ny: 0.92 }, // 89
+            { nx: 0.66, ny: 0.94 }, // 144
+            { nx: 0.70, ny: 0.94 }, // 233
+            { nx: 0.75, ny: 0.93 }, // 377
+            { nx: 0.79, ny: 0.90 }, // 610
+            { nx: 0.82, ny: 0.86 }, // 987
+            { nx: 0.84, ny: 0.81 }, // 1.597
+            { nx: 0.86, ny: 0.75 }, // 2.584
+            { nx: 0.87, ny: 0.67 }, // 4.181
+            { nx: 0.86, ny: 0.58 }, // 6.765
+            { nx: 0.83, ny: 0.48 }, // 10.946
+            { nx: 0.80, ny: 0.40 }, // 17.711
+            { nx: 0.76, ny: 0.33 }, // 28.657
+            { nx: 0.69, ny: 0.26 }, // 46.368
+            { nx: 0.61, ny: 0.24 }, // 75.025
+            { nx: 0.50, ny: 0.24 }, // 121.393
+            { nx: 0.38, ny: 0.27 }, // 196.418
+            { nx: 0.28, ny: 0.33 }, // 317.811
+            { nx: 0.19, ny: 0.42 }, // 514.229
+            { nx: 0.13, ny: 0.53 }, // 832.040
+            { nx: 0.07, ny: 0.68 }, // 1.346.269
+            { nx: 0.05, ny: 0.95 }  // 2.178.309
+        ];
+
+        function getPointForIndex(idx) {
+            const w = canvas.width;
+            const h = canvas.height;
+            const padX = 20;
+            const padY = 20;
+            const usableW = w - padX * 2;
+            const usableH = h - padY * 2;
+
+            const pos = keyPositions[Math.min(idx, keyPositions.length - 1)];
+            return {
+                x: padX + pos.nx * usableW,
+                y: padY + pos.ny * usableH
+            };
+        }
+
+        function resizeCanvas() {
+            canvas.width = wrapper.clientWidth;
+            canvas.height = wrapper.clientHeight;
+            drawFrame();
+        }
+
+        function updateCamera() {
+            camera.x += (camera.targetX - camera.x) * 0.1;
+            camera.y += (camera.targetY - camera.y) * 0.1;
+            camera.zoom += (camera.targetZoom - camera.zoom) * 0.1;
+        }
+
+        function zoomCanvas(factor) {
+            camera.targetZoom = Math.min(Math.max(camera.targetZoom * factor, 0.5), 3.0);
+        }
+
+        function resetCamera() {
+            camera.targetX = 0;
+            camera.targetY = 0;
+            camera.targetZoom = 1.0;
+        }
+
+        function switchMode(mode) {
+            // Mode visualizer indicator
+        }
+
+        function createParticles(x, y) {
+            for (let i = 0; i < 10; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 1 + Math.random() * 2.5;
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    alpha: 1,
+                    color: i % 2 === 0 ? '#fbbf24' : '#34d399',
+                    size: 2 + Math.random() * 2.5
+                });
+            }
+        }
+
+        function drawFrame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            updateCamera();
+
+            ctx.save();
+            ctx.translate(canvas.width / 2 + camera.x, canvas.height / 2 + camera.y);
+            ctx.scale(camera.zoom, camera.zoom);
+            ctx.translate(-canvas.width / 2, -canvas.height / 2);
+
+            const w = canvas.width;
+            const h = canvas.height;
+
+            // 1. Draw subtle grid background lines matching image
+            ctx.strokeStyle = 'rgba(51, 65, 85, 0.2)';
+            ctx.lineWidth = 1 / camera.zoom;
+            const step = 20;
+            for (let x = 0; x < w; x += step) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, h);
+                ctx.stroke();
+            }
+            for (let y = 0; y < h; y += step) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(w, y);
+                ctx.stroke();
+            }
+
+            // 2. Draw Golden Rectangle subdivisions matching image
+            ctx.strokeStyle = 'rgba(245, 158, 11, 0.4)';
+            ctx.lineWidth = 1.5 / camera.zoom;
+
+            const padX = 20;
+            const padY = 20;
+            const usableW = w - padX * 2;
+            const usableH = h - padY * 2;
+
+            // Outer Bounding Box
+            ctx.strokeRect(padX, padY, usableW, usableH);
+
+            // Major subdivision lines
+            ctx.beginPath();
+            // Main Vertical line
+            ctx.moveTo(padX + 0.55 * usableW, padY);
+            ctx.lineTo(padX + 0.55 * usableW, padY + usableH);
+
+            // Horizontal Top line
+            ctx.moveTo(padX + 0.55 * usableW, padY + 0.24 * usableH);
+            ctx.lineTo(padX + usableW, padY + 0.24 * usableH);
+
+            // Top vertical split
+            ctx.moveTo(padX + 0.63 * usableW, padY);
+            ctx.lineTo(padX + 0.63 * usableW, padY + 0.24 * usableH);
+
+            // Right vertical split
+            ctx.moveTo(padX + 0.88 * usableW, padY + 0.24 * usableH);
+            ctx.lineTo(padX + 0.88 * usableW, padY + usableH);
+
+            // Inner horizontal lower line
+            ctx.moveTo(padX + 0.55 * usableW, padY + 0.67 * usableH);
+            ctx.lineTo(padX + 0.88 * usableW, padY + 0.67 * usableH);
+
+            ctx.stroke();
+
+            // 3. Draw Spiral Curve passing through points
+            ctx.beginPath();
+            ctx.strokeStyle = '#000000'; // Black arc line matching image
+            ctx.lineWidth = 3.5 / camera.zoom;
+
+            const maxSteps = Math.min(currentIndex, fibonacciSequence.length - 1);
+            if (maxSteps >= 0) {
+                const startPt = getPointForIndex(0);
+                ctx.moveTo(startPt.x, startPt.y);
+
+                for (let i = 0; i <= maxSteps * 10; i++) {
+                    const subIndex = i / 10;
+                    const baseIdx = Math.floor(subIndex);
+                    const frac = subIndex - baseIdx;
+
+                    if (baseIdx < keyPositions.length - 1) {
+                        const p1 = getPointForIndex(baseIdx);
+                        const p2 = getPointForIndex(baseIdx + 1);
+                        const interpX = p1.x + (p2.x - p1.x) * frac;
+                        const interpY = p1.y + (p2.y - p1.y) * frac;
+                        ctx.lineTo(interpX, interpY);
+                    }
+                }
+                ctx.stroke();
+
+                // Gold glow over black spiral curve
+                ctx.strokeStyle = '#f59e0b';
+                ctx.lineWidth = 1.5 / camera.zoom;
+                ctx.stroke();
+            }
+
+            // 4. Render Revealed Number Label Boxes
+            for (let i = 0; i <= currentIndex; i++) {
+                if (i >= fibonacciSequence.length) continue;
+
+                const pt = getPointForIndex(i);
+                const numVal = fibonacciSequence[i];
+                const formattedNum = numVal.toLocaleString('id-ID');
+
+                const isCurrent = (i === currentIndex);
+
+                // Label styling
+                ctx.font = `bold ${Math.max(9, 12 / camera.zoom)}px "Plus Jakarta Sans", sans-serif`;
+                const textWidth = ctx.measureText(formattedNum).width;
+                const boxW = textWidth + 8 / camera.zoom;
+                const boxH = 18 / camera.zoom;
+
+                // Box Background
+                ctx.fillStyle = isCurrent ? '#f59e0b' : '#ffffff';
+                ctx.strokeStyle = isCurrent ? '#fef08a' : '#334155';
+                ctx.lineWidth = (isCurrent ? 2 : 1) / camera.zoom;
+
+                const rx = pt.x - boxW / 2;
+                const ry = pt.y - boxH / 2;
+
+                ctx.beginPath();
+                ctx.roundRect(rx, ry, boxW, boxH, 2 / camera.zoom);
+                ctx.fill();
+                ctx.stroke();
+
+                // Text
+                ctx.fillStyle = '#0f172a';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(formattedNum, pt.x, pt.y + 1 / camera.zoom);
+
+                // Highlight ring on active box
+                if (isCurrent) {
+                    ctx.beginPath();
+                    ctx.arc(pt.x, pt.y, boxW * 0.75, 0, Math.PI * 2);
+                    ctx.strokeStyle = 'rgba(245, 158, 11, 0.5)';
+                    ctx.lineWidth = 2 / camera.zoom;
+                    ctx.stroke();
+                }
+            }
+
+            // 5. Render Particles
+            for (let p of particles) {
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.alpha;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size / camera.zoom, 0, Math.PI * 2);
+                ctx.fill();
+
+                p.x += p.vx;
+                p.y += p.vy;
+                p.alpha -= 0.025;
+            }
+            ctx.globalAlpha = 1.0;
+            particles = particles.filter(p => p.alpha > 0);
+
+            ctx.restore();
+
+            requestAnimationFrame(drawFrame);
+        }
+
+        function focusCameraOnIndex(index) {
+            const pt = getPointForIndex(index);
+            const targetX = canvas.width / 2 - pt.x;
+            const targetY = canvas.height / 2 - pt.y;
+            
+            camera.targetX = targetX * 0.35;
+            camera.targetY = targetY * 0.35;
+            camera.targetZoom = 1.0;
+        }
+
+        function updateUI() {
+            const currentVal = fibonacciSequence[currentIndex];
+
+            document.getElementById('stat-current').innerText = currentVal.toLocaleString('id-ID');
+            document.getElementById('stat-index').innerText = `Suku ke-${currentIndex + 1} (N=${currentIndex + 1})`;
+            document.getElementById('stat-progress-count').innerText = `${currentIndex + 1} / ${fibonacciSequence.length}`;
+
+            // Highlight active list item
+            const listContainer = document.getElementById('numbers-scroll-list');
+            const items = listContainer.children;
+            for (let i = 0; i < items.length; i++) {
+                if (i === currentIndex) {
+                    items[i].className = "flex items-center justify-between p-2 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-300 font-bold";
+                    items[i].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                } else if (i < currentIndex) {
+                    items[i].className = "flex items-center justify-between p-1.5 rounded-lg bg-slate-900/60 border border-slate-800 text-slate-300";
+                } else {
+                    items[i].className = "flex items-center justify-between p-1.5 rounded-lg bg-slate-950/40 border border-slate-900 text-slate-600";
+                }
+            }
+
+            if (!isWaitingDelay) {
+                document.getElementById('status-badge').innerText = currentIndex === fibonacciSequence.length - 1 ? 
+                    "Spiral Lengkap!" : "Menggambar Spiral...";
+            }
+        }
+
+        function clearLoopTimers() {
+            clearInterval(stepInterval);
+            if (delayTimeout) {
+                clearTimeout(delayTimeout);
+                delayTimeout = null;
+            }
+            isWaitingDelay = false;
+        }
+
+        function revealStep(index) {
+            if (index < 0 || index >= fibonacciSequence.length) return;
+            currentIndex = index;
+
+            const pt = getPointForIndex(currentIndex);
+            createParticles(pt.x, pt.y);
+            playChime(currentIndex);
+
+            focusCameraOnIndex(currentIndex);
+            updateUI();
+        }
+
+        function nextStep() {
+            if (isWaitingDelay) return;
+
+            if (currentIndex < fibonacciSequence.length - 1) {
+                revealStep(currentIndex + 1);
+            } else {
+                // Jeda 5 detik setelah suku ke-32 (2.178.309) dimunculkan
+                isWaitingDelay = true;
+                clearInterval(stepInterval);
+                document.getElementById('status-badge').innerText = "Selesai! Mengulang kembali dalam 5 detik...";
+
+                delayTimeout = setTimeout(() => {
+                    isWaitingDelay = false;
+                    revealStep(0);
+                    if (isPlaying) {
+                        startInterval();
+                    }
+                }, 5000);
+            }
+        }
+
+        function stepNext() {
+            pauseAnimation();
+            nextStep();
+        }
+
+        function stepPrevious() {
+            pauseAnimation();
+            if (currentIndex > 0) {
+                revealStep(currentIndex - 1);
+            }
+        }
+
+        function startInterval() {
+            clearLoopTimers();
+            stepInterval = setInterval(() => {
+                nextStep();
+            }, speedMs);
+        }
+
+        function togglePlay() {
+            if (isPlaying) {
+                pauseAnimation();
+            } else {
+                playAnimation();
+            }
+        }
+
+        function playAnimation() {
+            if (currentIndex >= fibonacciSequence.length - 1 && !isWaitingDelay) {
+                currentIndex = -1;
+            }
+            isPlaying = true;
+            document.getElementById('icon-play').className = 'fa-solid fa-pause';
+            document.getElementById('text-play').innerText = 'Jeda';
+            startInterval();
+        }
+
+        function pauseAnimation() {
+            isPlaying = false;
+            clearLoopTimers();
+            document.getElementById('icon-play').className = 'fa-solid fa-play';
+            document.getElementById('text-play').innerText = 'Mulai';
+        }
+
+        function restartAnimation() {
+            clearLoopTimers();
+            currentIndex = 0;
+            revealStep(0);
+            playAnimation();
+        }
+
+        function changeSpeed(ms) {
+            speedMs = parseInt(ms);
+            if (isPlaying) {
+                startInterval();
+            }
+        }
+
+        function checkInputAnswer() {
+            const inputEl = document.getElementById('quiz-input');
+            const feedbackEl = document.getElementById('quiz-feedback');
+            const userVal = parseInt(inputEl.value.trim().replace(/\./g, ''), 10);
+            
+            if (isNaN(userVal)) {
+                feedbackEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation mr-1"></i> Harap masukkan angka jawaban terlebih dahulu.';
+                feedbackEl.className = "p-3 rounded-xl text-xs font-semibold text-center border bg-amber-500/10 border-amber-500/30 text-amber-300 block";
+                return;
+            }
+
+            if (userVal === totalSum) {
+                feedbackEl.innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> Benar sekali! Total penjumlahan dari ke-32 bilangan Fibonacci tersebut adalah <b>${totalSum.toLocaleString('id-ID')}</b> 🎉`;
+                feedbackEl.className = "p-3 rounded-xl text-xs font-semibold text-center border bg-emerald-500/10 border-emerald-500/30 text-emerald-300 block";
+            } else {
+                feedbackEl.innerHTML = `<i class="fa-solid fa-circle-xmark mr-1"></i> Jawaban kurang tepat (${userVal.toLocaleString('id-ID')}). Coba periksa kembali perhitungan Anda!`;
+                feedbackEl.className = "p-3 rounded-xl text-xs font-semibold text-center border bg-rose-500/10 border-rose-500/30 text-rose-300 block";
+            }
+        }
+
+        function populateNumbersList() {
+            const container = document.getElementById('numbers-scroll-list');
+            container.innerHTML = '';
+
+            fibonacciSequence.forEach((val, idx) => {
+                const item = document.createElement('div');
+                item.className = "flex items-center justify-between p-1.5 rounded-lg bg-slate-950/40 border border-slate-900 text-slate-600 cursor-pointer hover:border-slate-700 transition";
+                item.onclick = () => {
+                    pauseAnimation();
+                    revealStep(idx);
+                };
+                item.innerHTML = `
+                    <span class="font-mono text-[10px]">F<sub>${idx + 1}</sub></span>
+                    <span class="font-bold font-mono">${val.toLocaleString('id-ID')}</span>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        wrapper.addEventListener('mousedown', (e) => {
+            camera.isDragging = true;
+            camera.startX = e.clientX - camera.x;
+            camera.startY = e.clientY - camera.y;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (camera.isDragging) {
+                camera.x = e.clientX - camera.startX;
+                camera.y = e.clientY - camera.startY;
+                camera.targetX = camera.x;
+                camera.targetY = camera.y;
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            camera.isDragging = false;
+        });
+
+        wrapper.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const zoomFactor = e.deltaY < 0 ? 1.15 : 0.85;
+            zoomCanvas(zoomFactor);
+        }, { passive: false });
+
+        wrapper.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                camera.isDragging = true;
+                camera.startX = e.touches[0].clientX - camera.x;
+                camera.startY = e.touches[0].clientY - camera.y;
+            }
+        });
+
+        wrapper.addEventListener('touchmove', (e) => {
+            if (camera.isDragging && e.touches.length === 1) {
+                camera.x = e.touches[0].clientX - camera.startX;
+                camera.y = e.touches[0].clientY - camera.startY;
+                camera.targetX = camera.x;
+                camera.targetY = camera.y;
+            }
+        });
+
+        wrapper.addEventListener('touchend', () => {
+            camera.isDragging = false;
+        });
+
+        window.onload = function() {
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            populateNumbersList();
+            revealStep(0);
+            playAnimation();
+        };
+    </script>
+</body>
+</html>
